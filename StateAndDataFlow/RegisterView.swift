@@ -1,5 +1,5 @@
 //
-//  RegisterView.swift
+//  StarterView.swift
 //  StateAndDataFlow
 //
 //  Created by Alexey Efimov on 14.09.2022.
@@ -8,52 +8,57 @@
 import SwiftUI
 
 struct RegisterView: View {
-    @State private var name = ""
-    @EnvironmentObject private var user: UserManager
-    @EnvironmentObject private var nameCounter: NameCounter
-    @State private var buttonState = true
-    @State private var colorCount = Color.red
     
-    private var count: Int {
-        name.count
-    }
-    
+    @EnvironmentObject private var userManager: UserManager
     
     var body: some View {
         VStack {
-            HStack {
-                TextField("Enter your name", text: $name)
-                    .multilineTextAlignment(.center)
-                Text(count.formatted())
-                    .padding(.trailing)
-                    .foregroundColor(colorCount)
-            }
+            UserNameTF(
+                name: $userManager.user.name,
+                nameIsValid: userManager.nameValidate
+            )
             Button(action: registerUser) {
                 HStack {
                     Image(systemName: "checkmark.circle")
                     Text("OK")
                 }
-            }.disabled(buttonState)
+            }
+            .disabled(!userManager.nameValidate)
         }
+        .padding()
     }
     
     private func registerUser() {
-        if !name.isEmpty {
-            user.name = name
-            user.isRegister.toggle()
-        }
+        userManager.user.isRegister.toggle()
+        DataManager.shared.save(user: userManager.user)
     }
+}
+
+struct UserNameTF: View {
     
-    private mutating func nameValidation() {
-        if count < 3 {
-            colorCount = .green
-            buttonState = false
+    @Binding var name: String
+    var nameIsValid = false
+    
+    var body: some View {
+        ZStack {
+            TextField("Type your name", text: $name)
+                .multilineTextAlignment(.center)
+            HStack {
+                Spacer()
+                Text(name.count.formatted())
+                    .font(.callout)
+                    .foregroundColor(nameIsValid ? .green : .red)
+                    .padding([.top, .trailing])
+            }
+            .padding(.bottom)
         }
     }
 }
 
-struct RegisterView_Previews: PreviewProvider {
+struct Register_Previews: PreviewProvider {
     static var previews: some View {
         RegisterView()
+            .environmentObject(UserManager())
     }
 }
+
